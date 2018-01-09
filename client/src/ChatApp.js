@@ -6,9 +6,11 @@ class ChatApp extends Component {
     constructor(props) {
         super(props);
         const name = sessionStorage.getItem("name") || "";
+        const status = sessionStorage.getItem("status") || "";
         const loggedIn = name !== "";
         this.state = {
             name,
+            status,
             loggedIn,
             token: "",
             chatReady: false,
@@ -28,10 +30,15 @@ class ChatApp extends Component {
         this.setState({ name: event.target.value });
     };
 
+    onStatusChanged = (event) => {
+        this.setState({ status: event.target.value });
+    };
+
     logIn = (event) => {
         event.preventDefault();
         if (this.state.name !== "") {
             sessionStorage.setItem("name", this.state.name);
+            sessionStorage.setItem("status", this.state.status)
             this.setState({ loggedIn: true }, this.getToken);
         }
     };
@@ -133,6 +140,7 @@ class ChatApp extends Component {
         if (this.state.loggedIn) {
             loginOrChat = (
                 <div>
+                    {console.log(status)}
                     <h3>Messages</h3>
                     <p>Logged in as {this.state.name}</p>
                     <ul className="messages">{messages}</ul>
@@ -160,8 +168,12 @@ class ChatApp extends Component {
                     <NameBox
                         name={this.state.name}
                         onNameChanged={this.onNameChanged}
+                        status={this.state.status}
+                        onStatusChanged={this.onStatusChanged}
                         logIn={this.logIn}
                     />
+                    {console.log(this.state.name)}
+                    {console.log(this.state.status)}
                 </div>
             );
         }
