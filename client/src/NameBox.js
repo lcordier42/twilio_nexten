@@ -26,11 +26,10 @@ class NameBox extends Component {
                         onChange={onStatusChanged}
                         value={status}
                     >
-                        <option value=""></option>
+                        <option value="guest">guest</option>
                         <option value="business">business</option>
                         <option value="candidat">candidat</option>
                         <option value="coach">coach</option>
-                        <option value="guest">guest</option>
                     </select>
                     <button type="submit">Log in</button>
                 </form>

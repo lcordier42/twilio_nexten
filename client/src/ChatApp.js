@@ -79,7 +79,6 @@ class ChatApp extends Component {
     };
 
     clientInitiated = () => {
-        var i;
         this.setState({ chatReady: true }, () => {
             this.chatClient
                 .getChannelByUniqueName(this.channelName)
@@ -104,14 +103,6 @@ class ChatApp extends Component {
                     this.channel.getMessages().then(this.messagesLoaded);
                     this.channel.on("messageAdded", this.messageAdded);
                 });
-            this.chatClient
-                .getUserChannelDescriptors()
-                .then(function(paginator) {
-                    for (i = 0; i < paginator.items.length; i++) {
-                        var channel = paginator.items[i];
-                        console.log("Channel: " + channel.uniqueName);
-                    }
-                });
         });
     };
 
@@ -131,12 +122,10 @@ class ChatApp extends Component {
 
     onChannelChanged = (event) => {
         this.setState({ newChannel: event.target.value });
-        // this.channelName = this.state.newChannel;
     };
 
     onDelChannelChanged = (event) => {
         this.setState({ delChannel: event.target.value });
-        // this.channelName = this.state.delChannel;
     };
 
     sendMessage = (event) => {
@@ -195,40 +184,9 @@ class ChatApp extends Component {
             });
     };
 
-    // joinChannel = (event) => {
-    //     event.preventDefault();
-    //     this.channelName = this.state.joinChannel;
-    //     this.setState({ joinChannel: "" });
-    //     this.setState({ chatReady: true }, () => {
-    //         this.chatClient
-    //             .getChannelByUniqueName(this.channelName)
-    //             .then((channel) => {
-    //                 if (channel) {
-    //                     return (this.channel = channel);
-    //                 }
-    //             })
-    //             .catch((err) => {
-    //                 if (err.body.code === 50300) {
-    //                     return this.chatClient.createChannel({
-    //                         uniqueName: this.channelName,
-    //                     });
-    //                 }
-    //             })
-    //             .then((channel) => {
-    //                 this.channel = channel;
-    //                 window.channel = channel;
-    //                 sessionStorage.setItem("channelName", this.channelName);
-    //                 return this.channel.join();
-    //             })
-    //             .then(() => {
-    //                 this.channel.getMessages().then(this.messagesLoaded);
-    //                 this.channel.on("messageAdded", this.messageAdded);
-    //             });
-    //     });
-    // };
-
     render() {
         var loginOrChat;
+        var adminOrNot;
         const messages = this.state.messages.map((message) => {
             return (
                 <li key={message.sid} ref={this.newMessageAdded}>
@@ -236,6 +194,43 @@ class ChatApp extends Component {
                 </li>
             );
         });
+        if (
+            this.state.loggedIn &&
+            (this.state.status === "business" || this.state.status === "coach")
+        ) {
+            adminOrNot = (
+                <div>
+                    <form onSubmit={this.createNewChannel}>
+                        <input
+                            type="text"
+                            name="newchannel"
+                            id="newchannel"
+                            onChange={this.onChannelChanged}
+                            value={this.state.newChannel}
+                        />
+                        <button>join</button>
+                    </form>
+                    <form onSubmit={this.deleteChannel}>
+                        <input
+                            type="text"
+                            name="delchannel"
+                            id="delchannel"
+                            onChange={this.onDelChannelChanged}
+                            value={this.state.delChannel}
+                        />
+                        <button>delete</button>
+                    </form>
+                </div>
+            );
+        } else if (this.state.loggedIn) {
+            adminOrNot = (
+                <div>
+                    <h1>You can't manage channels</h1>
+                </div>
+            );
+        } else {
+            adminOrNot = null;
+        }
         if (this.state.loggedIn) {
             loginOrChat = (
                 <div>
@@ -258,36 +253,6 @@ class ChatApp extends Component {
                     <form onSubmit={this.logOut}>
                         <button>Log out</button>
                     </form>
-                    <form onSubmit={this.createNewChannel}>
-                        <input
-                            type="text"
-                            name="newchannel"
-                            id="newchannel"
-                            onChange={this.onChannelChanged}
-                            value={this.state.newChannel}
-                        />
-                        <button>join</button>
-                    </form>
-                    {/* <form onSubmit={this.joinChannel}>
-                        <input
-                            type="text"
-                            name="joinchannel"
-                            id="joinchannel"
-                            onChange={this.onChannelChanged}
-                            value={this.state.newChannel}
-                        />
-                        <button>join</button>
-                    </form> */}
-                    <form onSubmit={this.deleteChannel}>
-                        <input
-                            type="text"
-                            name="delchannel"
-                            id="delchannel"
-                            onChange={this.onDelChannelChanged}
-                            value={this.state.delChannel}
-                        />
-                        <button>delete</button>
-                    </form>
                 </div>
             );
         } else {
@@ -300,13 +265,15 @@ class ChatApp extends Component {
                         onStatusChanged={this.onStatusChanged}
                         logIn={this.logIn}
                     />
-                    {console.log(this.state.name)}
-                    {console.log(this.state.status)}
-                    {console.log(this.state.channel)}
                 </div>
             );
         }
-        return <div>{loginOrChat}</div>;
+        return (
+            <div>
+                <div>{loginOrChat}</div>
+                <div>{adminOrNot}</div>
+            </div>
+        );
     }
 }
 
