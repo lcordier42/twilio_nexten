@@ -6,7 +6,7 @@
     "dependencies": {
         "react": "15.4.2",
         "react-dom": "15.4.2",
-        "twilio-chat": "1.1.1"
+        "twilio-chat": "1.2.1"
     },
     "devDependencies": {
         "react-scripts": "0.9.5"

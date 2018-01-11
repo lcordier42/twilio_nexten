@@ -19,6 +19,8 @@ class ChatApp extends Component {
             channel: "",
             newChannel: "",
             delChannel: "",
+            inviteUser: "",
+            inviteChannel: "",
         };
         this.channelName = sessionStorage.getItem("channelName") || "general";
     }
@@ -57,12 +59,14 @@ class ChatApp extends Component {
             newMessage: "",
             newChannel: "",
             delChannel: "",
+            inviteUser: "",
+            inviteChannel: "",
         });
         sessionStorage.removeItem("name");
         this.chatClient.shutdown();
         this.channel = null;
     };
-
+    // /${this.state.status}
     getToken = () => {
         fetch(`/token/${this.state.name}`, {
             method: "POST",
@@ -128,6 +132,10 @@ class ChatApp extends Component {
         this.setState({ delChannel: event.target.value });
     };
 
+    onInviteChanged = (event) => {
+        this.setState({ inviteUser: event.target.value });
+    };
+
     sendMessage = (event) => {
         event.preventDefault();
         const message = this.state.newMessage;
@@ -170,6 +178,34 @@ class ChatApp extends Component {
                     this.channel.getMessages().then(this.messagesLoaded);
                     this.channel.on("messageAdded", this.messageAdded);
                 });
+        });
+    };
+
+    inviteChannel = (event) => {
+        event.preventDefault();
+        console.log(this.chatClient);
+        const user = this.state.inviteUser;
+        console.log(user);
+        this.setState({ inviteChannel: this.channelName });
+        this.setState({ inviteUser: "" });
+        this.channel
+            .invite(user)
+            .catch((err) => {
+                if (err.code === 50200) {
+                    console.log("This user doesn't exist.");
+                }
+            })
+            .then(function() {
+                console.log("Your friend " + user + " has been invited!");
+            });
+    };
+
+    acceptInvite = (event) => {
+        event.preventDefault();
+        console.log(this.chatClient);
+        this.chatClient.on("channelInvited", function(channel) {
+            console.log("Invited to channel " + channel.friendlyName);
+            channel.join();
         });
     };
 
@@ -220,6 +256,16 @@ class ChatApp extends Component {
                         />
                         <button>delete</button>
                     </form>
+                    <form onSubmit={this.inviteChannel}>
+                        <input
+                            type="text"
+                            name="inviteuser"
+                            id="inviteuser"
+                            onChange={this.onInviteChanged}
+                            value={this.state.inviteUser}
+                        />
+                        <button>invite</button>
+                    </form>
                 </div>
             );
         } else if (this.state.loggedIn) {
@@ -252,6 +298,9 @@ class ChatApp extends Component {
                     <br />
                     <form onSubmit={this.logOut}>
                         <button>Log out</button>
+                    </form>
+                    <form onSubmit={this.acceptInvite}>
+                        <button>Accept</button>
                     </form>
                 </div>
             );

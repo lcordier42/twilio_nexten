@@ -10,7 +10,14 @@ const app = new express();
 app.use(bodyParser.json());
 
 app.post("/token/:identity", (request, response) => {
+    // console.log(request.params.status);
+    console.log(request.params.identity);
     const identity = request.params.identity;
+    // const permissions =
+    //     request.params.status === "coach" ||
+    //     request.params.status === "business"
+    //         ? "service admin"
+    //         : "service user";
     const accessToken = new AccessToken(
         config.twilio.accountSid,
         config.twilio.apiKey,
@@ -22,6 +29,7 @@ app.post("/token/:identity", (request, response) => {
     });
     accessToken.addGrant(chatGrant);
     accessToken.identity = identity;
+    console.log(accessToken);
     response.set("Content-Type", "application/json");
     response.send(
         JSON.stringify({

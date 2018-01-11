@@ -13,7 +13,7 @@
     "dependencies": {
         "body-parser": "1.17.1",
         "express": "4.15.2",
-        "twilio": "3.6.7"
+        "twilio": "3.11.0"
     },
     "devDependencies": {
         "concurrently": "3.4.0",
