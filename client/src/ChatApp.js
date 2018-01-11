@@ -18,9 +18,8 @@ class ChatApp extends Component {
             newMessage: "",
             channel: "",
             newChannel: "",
-            delChannel: "",
             inviteUser: "",
-            inviteChannel: "",
+            delChannel: "",
         };
         this.channelName = sessionStorage.getItem("channelName") || "general";
     }
@@ -58,17 +57,16 @@ class ChatApp extends Component {
             messages: [],
             newMessage: "",
             newChannel: "",
-            delChannel: "",
             inviteUser: "",
-            inviteChannel: "",
+            delChannel: "",
         });
         sessionStorage.removeItem("name");
         this.chatClient.shutdown();
         this.channel = null;
     };
-    // /${this.state.status}
+
     getToken = () => {
-        fetch(`/token/${this.state.name}`, {
+        fetch(`/token/${this.state.name}/${this.state.status}`, {
             method: "POST",
         })
             .then((response) => response.json())
@@ -181,6 +179,17 @@ class ChatApp extends Component {
         });
     };
 
+    deleteChannel = (event) => {
+        event.preventDefault();
+        this.channelName = this.state.delChannel;
+        this.setState({ delChannel: "" });
+        this.chatClient
+            .getChannelByUniqueName(this.channelName)
+            .then((channel) => {
+                channel.delete();
+            });
+    };
+
     inviteChannel = (event) => {
         event.preventDefault();
         console.log(this.chatClient);
@@ -207,17 +216,6 @@ class ChatApp extends Component {
             console.log("Invited to channel " + channel.friendlyName);
             channel.join();
         });
-    };
-
-    deleteChannel = (event) => {
-        event.preventDefault();
-        this.channelName = this.state.delChannel;
-        this.setState({ delChannel: "" });
-        this.chatClient
-            .getChannelByUniqueName(this.channelName)
-            .then((channel) => {
-                channel.delete();
-            });
     };
 
     render() {
@@ -271,7 +269,16 @@ class ChatApp extends Component {
         } else if (this.state.loggedIn) {
             adminOrNot = (
                 <div>
-                    <h1>You can't manage channels</h1>
+                     <form onSubmit={this.createNewChannel}>
+                        <input
+                            type="text"
+                            name="newchannel"
+                            id="newchannel"
+                            onChange={this.onChannelChanged}
+                            value={this.state.newChannel}
+                        />
+                        <button>join</button>
+                    </form>
                 </div>
             );
         } else {
@@ -298,9 +305,6 @@ class ChatApp extends Component {
                     <br />
                     <form onSubmit={this.logOut}>
                         <button>Log out</button>
-                    </form>
-                    <form onSubmit={this.acceptInvite}>
-                        <button>Accept</button>
                     </form>
                 </div>
             );
