@@ -5,52 +5,33 @@ const twilio = require("twilio");
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.IpMessagingGrant;
-var accountSid = "ACfc346912749f3fa3fc75cd0abba49a62";
-var authToken = "025c64434e4149aaf6dc15c40e7e662a";
+var accountSid = config.twilio.accountSid;
+var authToken = config.twilio.authToken;
 var Twilio = require("twilio").Twilio;
 
 var client = new Twilio(accountSid, authToken);
 var service = client.chat.services(config.twilio.chatServiceSid);
 
-// service
-//     .channels("CHcdcf71ccf33248c8bdefb969f41ecd7d")
-//     .members.list()
-//     .then(function(response) {
-//         console.log(response);
-//     })
-//     .catch(function(error) {
-//         console.log(error);
-//     });
-
-// service.roles
+// service.users
 //     .list()
-//     .then(function(response) {
+//     .then((response) => {
 //         console.log(response);
 //     })
-//     .catch(function(error) {
+//     .catch((error) => {
 //         console.log(error);
 //     });
-
-service.users
-    .list()
-    .then((response) => {
-        console.log(response);
-    })
-    .catch((error) => {
-        console.log(error);
-    });
 
 const app = new express();
 app.use(bodyParser.json());
 
 app.post("/token/:identity/:status", (request, response) => {
     const identity = request.params.identity;
-    var permission = "RL0dad3491bb6349a5a53458a0fc97843c";
+    var permission = "RL0dad3491bb6349a5a53458a0fc97843c"; // service user
     if (
         request.params.status === "business" ||
         request.params.status === "coach"
     )
-        permission = "RL3d68dbcbf8ec4c018d36d578330309c0";
+        permission = "RL3d68dbcbf8ec4c018d36d578330309c0"; // admin user
     const accessToken = new AccessToken(
         config.twilio.accountSid,
         config.twilio.apiKey,
