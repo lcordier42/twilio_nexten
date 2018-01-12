@@ -59,6 +59,7 @@ class ChatApp extends Component {
             newChannel: "",
             inviteUser: "",
             delChannel: "",
+            inviteChannel: "",
         });
         sessionStorage.removeItem("name");
         sessionStorage.removeItem("status");
@@ -82,8 +83,8 @@ class ChatApp extends Component {
     };
 
     clientInitiated = () => {
+        console.log(this.channelName);
         this.setState({ chatReady: true }, () => {
-            console.log(this.chatClient);
             this.chatClient
                 .getChannelByUniqueName(this.channelName)
                 .then((channel) => {
@@ -107,6 +108,12 @@ class ChatApp extends Component {
                     this.channel.getMessages().then(this.messagesLoaded);
                     this.channel.on("messageAdded", this.messageAdded);
                 });
+            this.chatClient.on("channelInvited", function(channel) {
+                console.log("Invited to channel " + channel.uniqueName);
+                this.channel = channel;
+                sessionStorage.setItem("channelName", channel.uniqueName);
+                location.reload();
+            });
         });
     };
 
@@ -202,10 +209,7 @@ class ChatApp extends Component {
 
     inviteChannel = (event) => {
         event.preventDefault();
-        console.log(this.chatClient);
         const user = this.state.inviteUser;
-        console.log(user);
-        this.setState({ inviteChannel: this.channelName });
         this.setState({ inviteUser: "" });
         this.channel
             .invite(user)
@@ -217,21 +221,6 @@ class ChatApp extends Component {
             .then(function() {
                 console.log("Your friend " + user + " has been invited!");
             });
-    };
-
-    acceptInvite = (event) => {
-        event.preventDefault();
-        console.log(this.chatClient);
-        this.chatClient.on("channelInvited", function(channel) {
-            console.log("Invited to channel " + channel.friendlyName);
-
-            // Join the channel that you were invited to
-            this.channel = channel;
-            this.channel.join().then(() => {
-                this.channel.getMessages().then(this.messagesLoaded);
-                this.channel.on("messageAdded", this.messageAdded);
-            });
-        });
     };
 
     render() {
@@ -321,9 +310,6 @@ class ChatApp extends Component {
                     <br />
                     <form onSubmit={this.logOut}>
                         <button>Log out</button>
-                    </form>
-                    <form onSubmit={this.acceptInvite}>
-                        <button>Accept</button>
                     </form>
                 </div>
             );
