@@ -85,6 +85,7 @@ class ChatApp extends Component {
     };
 
     clientInitiated = () => {
+        console.log(this.channelName);
         this.setState({ chatReady: true }, () => {
             this.chatClient
                 .getChannelByUniqueName(this.channelName)
@@ -161,10 +162,39 @@ class ChatApp extends Component {
         if (this.invitedChannel) {
             this.channelName = this.invitedChannel;
             this.invitedChannel = "";
-            sessionStorage.setItem("invitedChannel", "");
         } else this.channelName = this.state.newChannel;
         this.setState({ newChannel: "" });
-        this.clientInitiated.bind(this);
+        this.setState({ chatReady: true }, () => {
+            this.chatClient
+                .getChannelByUniqueName(this.channelName)
+                .then((channel) => {
+                    if (channel) {
+                        return (this.channel = channel);
+                    }
+                })
+                .catch((err) => {
+                    if (err.body.code === 50300) {
+                        return this.chatClient.createChannel({
+                            uniqueName: this.channelName,
+                        });
+                    }
+                })
+                .then((channel) => {
+                    this.channel = channel;
+                    window.channel = channel;
+                    sessionStorage.setItem("channelName", this.channelName);
+                    return this.channel.join();
+                })
+                .then(() => {
+                    this.channel.getMessages().then(this.messagesLoaded);
+                    this.channel.on("messageAdded", this.messageAdded);
+                });
+            this.chatClient.on("channelInvited", function(channel) {
+                console.log("Invited to channel " + channel.uniqueName);
+                this.channel = channel;
+                sessionStorage.setItem("invitedChannel", channel.uniqueName);
+            });
+        });
     };
 
     deleteChannel = (event) => {
