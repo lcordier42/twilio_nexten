@@ -22,6 +22,7 @@ class ChatApp extends Component {
             delChannel: "",
         };
         this.channelName = sessionStorage.getItem("channelName") || "general";
+        this.invitedChannel = sessionStorage.getItem("invitedChannel") || "";
     }
 
     componentWillMount = () => {
@@ -59,10 +60,11 @@ class ChatApp extends Component {
             newChannel: "",
             inviteUser: "",
             delChannel: "",
-            inviteChannel: "",
         });
         sessionStorage.removeItem("name");
         sessionStorage.removeItem("status");
+        sessionStorage.setItem("channelName", "general");
+        this.channelName = "general";
         this.chatClient.shutdown();
         this.channel = null;
     };
@@ -111,8 +113,7 @@ class ChatApp extends Component {
             this.chatClient.on("channelInvited", function(channel) {
                 console.log("Invited to channel " + channel.uniqueName);
                 this.channel = channel;
-                sessionStorage.setItem("channelName", channel.uniqueName);
-                location.reload();
+                sessionStorage.setItem("invitedChannel", channel.uniqueName);
             });
         });
     };
@@ -158,7 +159,11 @@ class ChatApp extends Component {
 
     createNewChannel = (event) => {
         event.preventDefault();
-        this.channelName = this.state.newChannel;
+        if (this.invitedChannel) {
+            this.channelName = this.invitedChannel;
+            this.invitedChannel = "";
+            sessionStorage.setItem("invitedChannel", "");
+        } else this.channelName = this.state.newChannel;
         this.setState({ newChannel: "" });
         this.setState({ chatReady: true }, () => {
             this.chatClient
@@ -226,6 +231,7 @@ class ChatApp extends Component {
     render() {
         var loginOrChat;
         var adminOrNot;
+        var invited;
         const messages = this.state.messages.map((message) => {
             return (
                 <li key={message.sid} ref={this.newMessageAdded}>
@@ -289,6 +295,15 @@ class ChatApp extends Component {
         } else {
             adminOrNot = null;
         }
+        if (this.invitedChannel) {
+            invited = (
+                <div>
+                    <form onSubmit={this.createNewChannel}>
+                        <button>Accept</button>
+                    </form>
+                </div>
+            );
+        } else invited = null;
         if (this.state.loggedIn) {
             loginOrChat = (
                 <div>
@@ -330,6 +345,7 @@ class ChatApp extends Component {
             <div>
                 <div>{loginOrChat}</div>
                 <div>{adminOrNot}</div>
+                <div>{invited}</div>
             </div>
         );
     }
