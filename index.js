@@ -2,24 +2,15 @@ const config = require("./config");
 const express = require("express");
 const bodyParser = require("body-parser");
 const twilio = require("twilio");
+const Twilio = require("twilio").Twilio;
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.IpMessagingGrant;
-var accountSid = config.twilio.accountSid;
-var authToken = config.twilio.authToken;
-var Twilio = require("twilio").Twilio;
+const accountSid = config.twilio.accountSid;
+const authToken = config.twilio.authToken;
 
-var client = new Twilio(accountSid, authToken);
-var service = client.chat.services(config.twilio.chatServiceSid);
-
-// service.users
-//     .list()
-//     .then((response) => {
-//         console.log(response);
-//     })
-//     .catch((error) => {
-//         console.log(error);
-//     });
+const client = new Twilio(accountSid, authToken);
+const service = client.chat.services(config.twilio.chatServiceSid);
 
 const app = new express();
 app.use(bodyParser.json());

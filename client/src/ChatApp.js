@@ -85,7 +85,6 @@ class ChatApp extends Component {
     };
 
     clientInitiated = () => {
-        console.log(this.channelName);
         this.setState({ chatReady: true }, () => {
             this.chatClient
                 .getChannelByUniqueName(this.channelName)
@@ -165,40 +164,7 @@ class ChatApp extends Component {
             sessionStorage.setItem("invitedChannel", "");
         } else this.channelName = this.state.newChannel;
         this.setState({ newChannel: "" });
-        this.setState({ chatReady: true }, () => {
-            this.chatClient
-                .getChannelByUniqueName(this.channelName)
-                .then((channel) => {
-                    if (channel) {
-                        return (this.channel = channel);
-                    }
-                })
-                .catch((err) => {
-                    if (err.body.code === 50300) {
-                        return this.chatClient
-                            .createChannel({
-                                uniqueName: this.channelName,
-                            })
-                            .catch((err) => {
-                                if (err.code === 50107) {
-                                    console.log(
-                                        "This user can't create channels",
-                                    );
-                                }
-                            });
-                    }
-                })
-                .then((channel) => {
-                    this.channel = channel;
-                    window.channel = channel;
-                    sessionStorage.setItem("channelName", this.channelName);
-                    return this.channel.join();
-                })
-                .then(() => {
-                    this.channel.getMessages().then(this.messagesLoaded);
-                    this.channel.on("messageAdded", this.messageAdded);
-                });
-        });
+        this.clientInitiated.bind(this);
     };
 
     deleteChannel = (event) => {
@@ -299,7 +265,7 @@ class ChatApp extends Component {
             invited = (
                 <div>
                     <form onSubmit={this.createNewChannel}>
-                        <button>Accept</button>
+                        <button>Accept invite</button>
                     </form>
                 </div>
             );
