@@ -370,6 +370,15 @@ class ChatApp extends Component {
                     </form>
                 </div>
             );
+            if (this.invitedChannel && this.state.loggedIn) {
+                invited = (
+                    <div>
+                        <form onSubmit={this.createNewChannel}>
+                            <button>Accept invite</button>
+                        </form>
+                    </div>
+                );
+            } else invited = null;
         } else {
             loginOrChat = (
                 <div>
