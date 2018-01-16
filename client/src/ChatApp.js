@@ -16,7 +16,7 @@ class ChatApp extends Component {
             chatReady: false,
             messages: [],
             newMessage: "",
-            channel: "",
+            channels: [],
             newChannel: "",
             inviteUser: "",
             delChannel: "",
@@ -52,6 +52,7 @@ class ChatApp extends Component {
         event.preventDefault();
         this.setState({
             name: "",
+            status: "",
             loggedIn: false,
             token: "",
             chatReady: false,
@@ -85,7 +86,7 @@ class ChatApp extends Component {
     };
 
     clientInitiated = () => {
-        console.log(this.channelName);
+        this.channelList = [];
         this.setState({ chatReady: true }, () => {
             this.chatClient
                 .getChannelByUniqueName(this.channelName)
@@ -115,7 +116,41 @@ class ChatApp extends Component {
                 this.channel = channel;
                 sessionStorage.setItem("invitedChannel", channel.uniqueName);
             });
+            this.chatClient
+                .getUserChannelDescriptors()
+                .then(this.channelAdded.bind(this))
+                .then(this.channelLoaded.bind(this));
         });
+    };
+
+    channelAdded = (paginator) => {
+        var i;
+        var channel = [];
+
+        for (i = 0; i < paginator.items.length; i++) {
+            channel[i] = paginator.items[i].uniqueName;
+        }
+        this.setState({ channels: channel });
+        console.log(this.state.channels);
+    };
+
+    channelLoaded = () => {
+        var i;
+
+        console.log("hello");
+        for (i = 0; i < this.state.channels.length; i++) {
+            console.log(this.state.channels[i]);
+            this.channelList.push(
+                <button
+                    type="submit"
+                    key={i}
+                    onClick={this.onChannelChanged}
+                    value={this.state.channels[i]}
+                >
+                    {this.state.channels[i]}
+                </button>,
+            );
+        }
     };
 
     messagesLoaded = (messagePage) => {
@@ -159,9 +194,11 @@ class ChatApp extends Component {
 
     createNewChannel = (event) => {
         event.preventDefault();
+        this.channelList = [];
         if (this.invitedChannel) {
             this.channelName = this.invitedChannel;
             this.invitedChannel = "";
+            sessionStorage.setItem("invitedChannel", "");
         } else this.channelName = this.state.newChannel;
         this.setState({ newChannel: "" });
         this.setState({ chatReady: true }, () => {
@@ -169,6 +206,7 @@ class ChatApp extends Component {
                 .getChannelByUniqueName(this.channelName)
                 .then((channel) => {
                     if (channel) {
+                        console.log("heho");
                         return (this.channel = channel);
                     }
                 })
@@ -180,20 +218,12 @@ class ChatApp extends Component {
                     }
                 })
                 .then((channel) => {
-                    this.channel = channel;
-                    window.channel = channel;
-                    sessionStorage.setItem("channelName", this.channelName);
-                    return this.channel.join();
-                })
-                .then(() => {
-                    this.channel.getMessages().then(this.messagesLoaded);
-                    this.channel.on("messageAdded", this.messageAdded);
+                    channel.add(this.state.name);
                 });
-            this.chatClient.on("channelInvited", function(channel) {
-                console.log("Invited to channel " + channel.uniqueName);
-                this.channel = channel;
-                sessionStorage.setItem("invitedChannel", channel.uniqueName);
-            });
+            this.chatClient
+                .getUserChannelDescriptors()
+                .then(this.channelAdded.bind(this))
+                .then(this.channelLoaded.bind(this));
         });
     };
 
@@ -206,6 +236,10 @@ class ChatApp extends Component {
             .then((channel) => {
                 channel.delete();
             });
+        this.chatClient
+            .getUserChannelDescriptors()
+            .then(this.channelAdded.bind(this))
+            .then(this.channelLoaded.bind(this));
     };
 
     inviteChannel = (event) => {
@@ -224,10 +258,43 @@ class ChatApp extends Component {
             });
     };
 
+    joinChannel = (event) => {
+        event.preventDefault();
+        this.channelName = this.state.newChannel;
+        this.setState({ newChannel: "" });
+        this.setState({ chatReady: true }, () => {
+            this.chatClient
+                .getChannelByUniqueName(this.channelName)
+                .then((channel) => {
+                    if (channel) {
+                        return (this.channel = channel);
+                    }
+                })
+                .catch((err) => {
+                    if (err.code === 50300) {
+                        console.log("This channel doesn't exist");
+                    }
+                })
+                .then((channel) => {
+                    this.channel = channel;
+                    window.channel = channel;
+                    sessionStorage.setItem("channelName", this.channelName);
+                    return this.channel.join();
+                })
+                .then(() => {
+                    this.channel.getMessages().then(this.messagesLoaded);
+                    this.channel.on("messageAdded", this.messageAdded);
+                });
+            this.chatClient
+                .getUserChannelDescriptors()
+                .then(this.channelLoaded.bind(this));
+        });
+    };
+
     render() {
         var loginOrChat;
         var adminOrNot;
-        var invited;
+
         const messages = this.state.messages.map((message) => {
             return (
                 <li key={message.sid} ref={this.newMessageAdded}>
@@ -249,7 +316,7 @@ class ChatApp extends Component {
                             onChange={this.onChannelChanged}
                             value={this.state.newChannel}
                         />
-                        <button>join</button>
+                        <button>create</button>
                     </form>
                     <form onSubmit={this.deleteChannel}>
                         <input
@@ -273,33 +340,9 @@ class ChatApp extends Component {
                     </form>
                 </div>
             );
-        } else if (this.state.loggedIn) {
-            adminOrNot = (
-                <div>
-                    <form onSubmit={this.createNewChannel}>
-                        <input
-                            type="text"
-                            name="newchannel"
-                            id="newchannel"
-                            onChange={this.onChannelChanged}
-                            value={this.state.newChannel}
-                        />
-                        <button>join</button>
-                    </form>
-                </div>
-            );
         } else {
             adminOrNot = null;
         }
-        if (this.invitedChannel) {
-            invited = (
-                <div>
-                    <form onSubmit={this.createNewChannel}>
-                        <button>Accept invite</button>
-                    </form>
-                </div>
-            );
-        } else invited = null;
         if (this.state.loggedIn) {
             loginOrChat = (
                 <div>
@@ -317,6 +360,9 @@ class ChatApp extends Component {
                         />
                         <button>Send</button>
                     </form>
+                    <br />
+                    <br />
+                    <form onSubmit={this.joinChannel}>{this.channelList}</form>
                     <br />
                     <br />
                     <form onSubmit={this.logOut}>
@@ -341,7 +387,6 @@ class ChatApp extends Component {
             <div>
                 <div>{loginOrChat}</div>
                 <div>{adminOrNot}</div>
-                <div>{invited}</div>
             </div>
         );
     }
